@@ -19,9 +19,9 @@
 
 bool CsvReadLine(CsvFile * f);
 
-CsvFile * __stdcall CsvOpen(char * name, int delimiter) {
+CsvFile * __stdcall CsvOpen(wchar_t * name, int delimiter) {
 	FILE * fd;
-	if (fopen_s(&fd, name, "rb") == 0) {
+	if (_wfopen_s(&fd, name, L"rb") == 0) {
 		CsvFile *f = new CsvFile;
 		f->fd = fd;
 		f->bufPtr = 0;
@@ -41,14 +41,14 @@ bool CsvReadLine(CsvFile * f) {
 	return true;
 }
 
-char * __stdcall CsvReadString(CsvFile * f) {
-	memset(f->stringBuffer, 0, STRING_BUFFER_SIZE);
+wchar_t * __stdcall CsvReadString(CsvFile * f) {
+	memset(f->wstringBuffer, 0, 2 * STRING_BUFFER_SIZE);
 	if (f->lineBuffer[f->bufPtr] == 0 ||
 		f->lineBuffer[f->bufPtr] == '\r' ||
 		f->lineBuffer[f->bufPtr] == '\n') {
 		if (!CsvReadLine(f)) {
 			// end of file
-			return f->stringBuffer;
+			return f->wstringBuffer;
 		}
 	}
 	int i = 0;
@@ -62,16 +62,17 @@ char * __stdcall CsvReadString(CsvFile * f) {
 			f->bufPtr--;
 			break;
 		}
-		f->stringBuffer[i] = readchar;
+		wchar_t wreadchar = readchar;
+		f->wstringBuffer[i] = readchar;
 		i++;
 	}
-	return f->stringBuffer;
+	return f->wstringBuffer;
 }
 
 double __stdcall CsvReadDouble(CsvFile * f) {
 	CsvReadString(f);
 	double result = 0;
-	sscanf_s(f->stringBuffer, "%lf", &result);
+	swscanf_s(f->wstringBuffer, L"%lf", &result);
 	return result;
 }
 

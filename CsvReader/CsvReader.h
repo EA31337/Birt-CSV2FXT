@@ -19,7 +19,7 @@
 
 typedef struct {
 	int bufPtr;
-	char stringBuffer[STRING_BUFFER_SIZE];
+	wchar_t wstringBuffer[STRING_BUFFER_SIZE];
 	char lineBuffer[LINE_BUFFER_SIZE];
 	FILE *fd;
 	int delimiter;

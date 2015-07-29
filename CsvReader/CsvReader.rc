@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,0,1,1
- PRODUCTVERSION 0,0,1,1
+ FILEVERSION 0,0,1,2
+ PRODUCTVERSION 0,0,1,2
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "http://eareview.net"
             VALUE "FileDescription", "CsvReader library for the CSV2FXT MQL script"
-            VALUE "FileVersion", "0, 0, 1, 1"
+            VALUE "FileVersion", "0, 0, 1, 2"
             VALUE "InternalName", "CsvReader.dll"
             VALUE "LegalCopyright", "Copyright (C) 2012 birt@eareview.net"
             VALUE "OriginalFilename", "CsvReader.dll"
             VALUE "ProductName", "CsvReader"
-            VALUE "ProductVersion", "0, 0, 1, 1"
+            VALUE "ProductVersion", "0, 0, 1, 2"
         END
     END
     BLOCK "VarFileInfo"

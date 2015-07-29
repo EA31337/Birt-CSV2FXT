@@ -1,0 +1,10 @@
+LIBRARY	"CsvReader"
+
+EXPORTS
+CsvOpen
+CsvReadString
+CsvReadDouble
+CsvIsLineEnding
+CsvIsEnding
+CsvClose
+CsvSeek

@@ -1,0 +1,7 @@
+@ cdecl CsvOpen()
+@ cdecl CsvReadString()
+@ cdecl CsvReadDouble()
+@ cdecl CsvIsLineEnding()
+@ cdecl CsvIsEnding()
+@ cdecl CsvClose()
+@ cdecl CsvSeek()

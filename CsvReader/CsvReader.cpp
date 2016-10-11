@@ -16,13 +16,14 @@
 
 #include "stdafx.h"
 #include "CsvReader.h"
+#include <malloc.h>
 
-bool CsvReadLine(CsvFile * f);
+int CsvReadLine(CsvFile * f);
 
 CsvFile * __stdcall CsvOpen(wchar_t * name, int delimiter) {
 	FILE * fd;
 	if (_wfopen_s(&fd, name, L"rb") == 0) {
-		CsvFile *f = new CsvFile;
+		CsvFile *f = malloc(sizeof(CsvFile));
 		f->fd = fd;
 		f->bufPtr = 0;
 		f->delimiter = delimiter;
@@ -32,13 +33,13 @@ CsvFile * __stdcall CsvOpen(wchar_t * name, int delimiter) {
 	return (CsvFile*)-1;
 }
 
-bool CsvReadLine(CsvFile * f) {
+int CsvReadLine(CsvFile * f) {
 	memset(f->lineBuffer, 0, LINE_BUFFER_SIZE);
 	f->bufPtr = 0;
 	if (!fgets(f->lineBuffer, LINE_BUFFER_SIZE, f->fd)) {
-		return false;
+		return 0;
 	}
-	return true;
+	return 1;
 }
 
 wchar_t * __stdcall CsvReadString(CsvFile * f) {
@@ -94,7 +95,7 @@ int __stdcall CsvIsEnding(CsvFile * f) {
 
 int __stdcall CsvClose(CsvFile * f) {
 	if (fclose(f->fd) == 0) {
-		delete f;
+		free(f);
 		return 1;
 	}
 	return 0;

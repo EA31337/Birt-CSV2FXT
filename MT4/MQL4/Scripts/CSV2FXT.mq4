@@ -2,7 +2,7 @@
     Copyright (C) 2009-2012 Birt Ltd <birt@eareview.net>
 
     This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
-    
+
     1. Definitions
 
     The terms "reproduce", "reproduction", and "distribution" have the same meaning here as under U.S. copyright law.
@@ -10,18 +10,19 @@
     "Your company" means the company you worked for when you downloaded the software.
     "Reference use" means use of the software within your company as a reference, in read only form, for the sole purposes of debugging and maintaining your products to run properly in conjuction with the software. For clarity, "reference use" does NOT include (a) the right to use the software for purposes of designing, developing, or testing other software that has the same or substantially the same features or functionality as the software, and (b) the right to distribute the software outside of your household or company.
     "Licensed patents" means any Licensor patent claims which read directly on the software as distributed by the Licensor under this license.
-    
+
     2. Grant of Rights
 
     (A) Copyright Grant- Subject to the terms of this license, the Licensor grants you a non-transferable, non-exclusive, worldwide, royalty-free copyright license to use and to reproduce the software for reference use.
     (B) Patent Grant- Subject to the terms of this license, the Licensor grants you a non-transferable, non-exclusive, worldwide, royalty-free patent license under licensed patents for reference use.
-    
+
     3. Limitations
 
     (A) No Trademark License- This license does not grant you any rights to use the Licensor's name, logo, or trademarks.
     (B) If you begin patent litigation against the Licensor over patents that you think may apply to the software (including a cross-claim or counterclaim in a lawsuit), your license to the software ends automatically.
     (C) The software is licensed "as-is." You bear the risk of using it. The Licensor gives no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the Licensor excludes the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
 */
+
 #property copyright "birt"
 #property link      "http://eareview.net/"
 #property show_inputs
@@ -69,7 +70,7 @@
 #import
 
 enum Version {
-   CSV2FXT_Version=0, // 0.50
+   CSV2FXT_Version=0, // 0.51
 };
 
 enum DST {
@@ -147,7 +148,7 @@ enum AGMT {
 };
 
 #include <FXTHeader.mqh>
-input Version CSV2FXT_version=0; // CSV2FXT version
+input string CSV2FXT_version="0.51"; // CSV2FXT version
 extern string CsvFile="";     // CSV filename
 extern bool   CreateHst=true; // Create HST files
 extern string ValueInfo="(regardless of the number of digits)."; // All spreads & commissions are in pips
@@ -158,30 +159,32 @@ extern datetime EndDate=0; // End date
 extern bool   UseRealSpread=false; // Use real (variable) spread
 extern double SpreadPadding = 0.0; // Spread padding
 extern double MinSpread = 0.0; // Minimum spread
-extern string CommissionInfo = "Only fill in the desired commission type."; // Commission info 
+extern string CommissionInfo = "Only fill in the desired commission type."; // Commission info?
 extern double PipsCommission = 0.0; // Commission in pips
 extern double MoneyCommission = 0.0; // Commission in account currency
 extern string Leverage = "automatic (current account leverage)";
 extern string GMTOffsetInfo2 = "These apply to the resulting FXT file."; // FXT GMT and DST info
 input  GMT    FXTGMTOffset = 0; // FXT GMT offset
 input  DST    FXTDST = 0; // FXT DST setting
-extern string GMTOffsetInfo3 = "These specify the configuration of the CSV data file."; // CSV GMT and DST info  
+extern string GMTOffsetInfo3 = "These specify the configuration of the CSV data file."; // CSV GMT and DST info ?
 input  AGMT   CSVGMTOffset = -13; // CSV GMT offset
 input  ADST   CSVDST = -1; // CSV DST setting
-extern bool   RemoveDuplicateTicks = true; // Remove duplicate ticks
-extern bool   CreateM1 = false; // Create M1 FXT
-extern bool   CreateM5 = false; // Create M5 FXT
-extern bool   CreateM15 = false; // Create M15 FXT
-extern bool   CreateM30 = false; // Create M30 FXT
-extern bool   CreateH1 = false; // Create H1 FXT
-extern bool   CreateH4 = false; // Create H4 FXT
-extern bool   CreateD1 = false; // Create D1 FXT
+extern bool   RemoveDuplicateTicks = false; // Remove duplicate ticks
+extern bool   CreateM1 = true; // Create M1 FXT
+extern bool   CreateM5 = true; // Create M5 FXT
+extern bool   CreateM15 = true; // Create M15 FXT
+extern bool   CreateM30 = true; // Create M30 FXT
+extern bool   CreateH1 = true; // Create H1 FXT
+extern bool   CreateH4 = true; // Create H4 FXT
+extern bool   CreateD1 = true; // Create D1 FXT
 extern string TimeShiftInfo = "Do not enable unless you know exactly what you're doing."; // Time shift info
 extern bool   TimeShift = false; // Time shift
 extern double PriceFactor = 1.0; // Price multiplication factor
-// this was removed from the externs because mostly nobody needs it
-//extern string VolumeInfo1="Only enable this if you actually need it.";
-bool UseRealVolume=false;
+// This was removed from the externs because mostly nobody needs it.
+// extern string VolumeInfo1="Only enable this if you actually need it.";
+bool UseRealVolume=false; // Do not enable, not compatible anymore.
+
+bool CorrectVolume = true; // Enable this to allow correct volume calculation on all timeframes.
 
 int      ExtSrcGMT = 0;
 int      ExtSrcDST = 0;
@@ -243,8 +246,9 @@ int      ExtMinHoursGap = 2;
 #define FIELD_TYPE_NUMBER 1
 #define KNOWN_DATE_FORMATS 20
 
-void OnDeinit(const int reason) {
-
+void OnDeinit(const int reason)
+{
+   TerminalClose(0);
 }
 
 void OnStart()
@@ -301,15 +305,15 @@ void OnStart()
    if (IsNumeric(Leverage)) {
       LeverageVal = StrToInteger(Leverage);
    }
-   
-   if(CreateM1 == true) ExtPeriodSelection[0] = true;
-   if(CreateM5 == true) ExtPeriodSelection[1] = true;
-   if(CreateM15 == true) ExtPeriodSelection[2] = true;
-   if(CreateM30 == true) ExtPeriodSelection[3] = true;
-   if(CreateH1 == true) ExtPeriodSelection[4] = true;
-   if(CreateH4 == true) ExtPeriodSelection[5] = true;
-   if(CreateD1 == true) ExtPeriodSelection[6] = true;
-   
+
+   if (CreateM1 == true || CorrectVolume == true) ExtPeriodSelection[0] = true;
+   if (CreateM5 == true || CorrectVolume == true) ExtPeriodSelection[1] = true;
+   if (CreateM15 == true || CorrectVolume == true) ExtPeriodSelection[2] = true;
+   if (CreateM30 == true || CorrectVolume == true) ExtPeriodSelection[3] = true;
+   if (CreateH1 == true || CorrectVolume == true) ExtPeriodSelection[4] = true;
+   if (CreateH4 == true || CorrectVolume == true) ExtPeriodSelection[5] = true;
+   if (CreateD1 == true || CorrectVolume == true) ExtPeriodSelection[6] = true;
+
    if (CsvFile == "") {
       CsvFile = StringSubstr(Symbol(),0,6) + ".csv";
    }
@@ -378,6 +382,7 @@ void OnStart()
          WriteHeader(ExtFxtHandle[i],Symbol(),ExtPeriods[i],0,(int)Spread,PipsCommission,MoneyCommission,LeverageVal);
       }
    }
+
 //---- open hst-files and write their headers
    if(CreateHst) WriteHstHeaders();
    int progress = -1;
@@ -538,7 +543,9 @@ void OnStart()
       hstFiles = " and the HST files to history\\" + AccountServer();
       note = "\nNote: this will overwrite any existing " + Symbol() + " HST files in the history\\" + AccountServer() + " folder!";
    }
+   bool flag = false;
    if (MessageBox("Processing for " + Symbol() + " has finished.\nWould you like to move the FXT file(s) to tester\\history" + hstFiles + "?" + note, "CSV2FXT", MB_YESNO | MB_ICONQUESTION) == IDYES) {
+      flag = true;
       for (i = 0; i < ExtPeriodCount; i++) {
          if (ExtPeriodSelection[i] && ExtFxtHandle[i] >= 0) {
             fileName=Symbol()+(string)ExtPeriods[i]+"_0.fxt";
@@ -548,7 +555,9 @@ void OnStart()
                copyOk = true;
             }
             else if ((attr & FILE_ATTRIBUTE_READONLY) != 0) {
-               if (MessageBox("File tester\\history\\" + fileName + " already exists and has its readonly attribute set. Would you like to overwrite it?", "CSV2FXT", MB_ICONQUESTION | MB_YESNO) == IDYES) {
+               if (flag == true)
+               //if (MessageBox("File tester\\history\\" + fileName + " already exists and has its readonly attribute set. Would you like to overwrite it?", "CSV2FXT", MB_ICONQUESTION | MB_YESNO) == IDYES)
+               {
                   SetFileAttributesW(ExtTerminalPath + "tester\\history\\" + fileName, FILE_ATTRIBUTE_NORMAL);
                   copyOk = true;
                }
@@ -558,7 +567,7 @@ void OnStart()
             }
             if (copyOk) {
                if (MoveFileExW(ExtFolder + fileName, ExtTerminalPath + "\\tester\\history\\" + fileName, MOVEFILE_REPLACE_EXISTING) == 0) {
-                  MessageBox("Unable to move MQL4\\Files\\" + fileName + " to " + "tester\\history\\" + fileName + ".", "CSV2FXT", MB_ICONEXCLAMATION);
+                  MessageBox("Unable to move MQL4\\Files\\" + fileName + " to " + "tester\\history\\" + fileName + ". Possibly strategy tester locked the file, please restart your MT4 terminal, run CSV2FXT script first.", "CSV2FXT", MB_ICONEXCLAMATION);
                }
             }
          }
@@ -568,10 +577,11 @@ void OnStart()
          for (i = 0; i < ExtPeriodCount; i++) {
             fileName = Symbol() + (string)ExtPeriods[i] + ".hst";
             if (MoveFileExW(ExtFolder + fileName, ExtTerminalPath + targetPath + fileName, MOVEFILE_REPLACE_EXISTING) == 0) {
-               MessageBox("Unable to move MQL4\\Files\\" + fileName + " to " + targetPath + fileName + ".");
+               MessageBox("Unable to move MQL4\\Files\\" + fileName + " to " + targetPath + fileName + ". Possibly strategy tester locked the file, please restart your MT4 terminal, run CSV2FXT script first.");
             }
          }
          MessageBox("You should restart your MT4 terminal at this point to make sure the HST files are properly synchronized.", "CSV2FXT", MB_ICONEXCLAMATION);
+
       }
    }
 //----
@@ -713,17 +723,17 @@ bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume)
 	      // file is ending
 	      return (false);
 	   }
-	   
+
 	   if (brokenRecord) {
 	      if (ExtLastTime != 0) {  // don't report this if it's the header row
 	        Print("Broken record in the CSV file after " + TimeToStr(ExtLastTime, TIME_MINUTES|TIME_DATE|TIME_SECONDS));
 	      }
 	      continue;
 	   }
-	   
+
 	   dblAsk = NormalizeDouble(PriceFactor * dblAsk, Digits);
 	   dblBid = NormalizeDouble(PriceFactor * dblBid, Digits);
-	   
+
 	   if (wrongPricesMsg < 20 && ExtLastTime != 0) {
 	     if ( (lastTickAsk != 0 && MathAbs(dblAsk - lastTickAsk) > lastTickAsk * ExtTickMaxDifference) ||
 	          (lastTickBid != 0 && MathAbs(dblBid - lastTickBid) > lastTickBid * ExtTickMaxDifference) ||
@@ -737,22 +747,22 @@ bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume)
 	        continue;
 	     }
       }
-      
+
       date_time -= ExtSrcGMT * 3600;
       date_time -= DSTOffset(cur_time, ExtSrcDST);
-	  
+
       cur_time = date_time + FXTGMTOffset * 3600;
       cur_time += DSTOffset(cur_time, FXTDST);
       if (TimeShift) {
          cur_time -= 883612800;
       }
       tick_price = dblBid;
-      
+
       if (UseRealSpread) {
          ExtSpread = NormalizeDouble(dblAsk - tick_price + SpreadPadding * Point, Digits);
          if (ExtSpread < MinSpread * Point) ExtSpread = NormalizeDouble(MinSpread * Point, Digits);
       }
-      
+
       if (!UseRealVolume) {
          tick_volume = 1;
       }
@@ -769,7 +779,7 @@ bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume)
       lastTickTimeMin = TimeMinute(cur_time);
       lastTickAsk = dblAsk;
       lastTickBid = dblBid;
-      
+
       if (ExtLastTime != 0 && cur_time >= ExtLastTime + ExtMinHoursGap * 3600) {
          int day = TimeDayOfWeek(cur_time);
          bool alert = true;
@@ -854,7 +864,7 @@ void WriteHstHeaders()
       int    i_hperiod=ExtPeriods[i];
       int    i_hdigits=Digits;
       int    i_unused[13];
-//----  
+//----
       ExtHstHandle[i]=FileOpen(c_symbol+(string)i_hperiod+".hst", FILE_BIN|FILE_WRITE);
       if(ExtHstHandle[i] < 0) Print("Error opening " + c_symbol + (string)i_hperiod + ".hst");
 //---- write history file header
@@ -1430,7 +1440,7 @@ bool FigureOutCSVFormat(string csvFile) {
       cmt = cmt + ".";
       Print(cmt);
    }
-   
+
    // figure out the last date in the file
    if (IsDllsAllowed()) {
       int fd = CreateFileW(ExtFolder + csvFile, GENERIC_READ, W_FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -1665,7 +1675,7 @@ bool CheckDateCommon(string year, string month, string day, string hour, string 
    else if (StringLen(year) == 2) {
       if (!IsNumeric(year) || (StrToInteger(year) > 38 && StrToInteger(year) < 70)) {
          return (false);
-      }   
+      }
    }
    else {
       return (false);
@@ -2401,4 +2411,4 @@ string DllVersion(string dllName) {
       vString += vChar;
    }
    return (StringTrimRight(StringTrimLeft(StringSubstr(vString, StringFind(vString, "FileVersion") + 11, 10))));
-} 
+}
